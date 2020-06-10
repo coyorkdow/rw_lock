@@ -1,60 +1,67 @@
-import threading as thread
-import random
+from PyQt5.QtCore import QThread, pyqtSignal, QMutex
+
+_read_num_lock = QMutex()
+_write_lock = QMutex()
+reader_cnt = 0
 
 
-class RWLocker:
-    def __init__(self):
-        self.__read_num_lock = thread.Lock()
-        self.__write_lock = thread.Lock()
-        self.resource = 0
-        self.__read_cnt = 0
+class Reader(QThread):
+    readStartSignal = pyqtSignal(int)
+    readEndSignal = pyqtSignal(int)
 
-    def __read_acquire(self):
-        self.__read_num_lock.acquire()
-        self.__read_cnt += 1
-        if self.__read_cnt == 1:
-            self.__write_lock.acquire()
-        self.__read_num_lock.release()
+    def __init__(self, main_window, id):
+        super(Reader, self).__init__()
+        super().__init__()
+        self.mainWindow = main_window
+        self.id = id
 
-    def __read_release(self):
-        self.__read_num_lock.acquire()
-        self.__read_cnt -= 1
-        if self.__read_cnt == 0:
-            self.__write_lock.release()
-        self.__read_num_lock.release()
-
-    def __write_acquire(self):
-        self.__write_lock.acquire()
-
-    def __write_release(self):
-        self.__write_lock.release()
-
-    def reader(self, no):
+    def run(self):
         try:
             self.__read_acquire()
-            print('reader {} is reading resource... resource={}'.format(no, self.resource))
+            self.mainWindow.readLocks[self.id].lock()
+            self.readStartSignal.emit(self.id)
+
+            self.mainWindow.readLocks[self.id].lock()
+            self.readEndSignal.emit(self.id)
         finally:
             self.__read_release()
 
-    def writer(self, no):
-        try:
-            self.__write_acquire()
-            self.resource += 1
-            print('writer {} is writing resource... resource={}'.format(no, self.resource))
-        finally:
-            self.__write_release()
+    def __read_acquire(self):
+        global reader_cnt
+        _read_num_lock.lock()
+        reader_cnt += 1
+        if reader_cnt == 1:
+            _write_lock.lock()
+        _read_num_lock.unlock()
+
+    def __read_release(self):
+        global reader_cnt
+        _read_num_lock.lock()
+        reader_cnt -= 1
+        if reader_cnt == 0:
+            _write_lock.unlock()
+        _read_num_lock.unlock()
+
+
+class Writer(QThread):
+    writeStartSignal = pyqtSignal(str, str)
+    writeEndSignal = pyqtSignal(str)
+
+    def __init__(self, main_window, text, id):
+        super(Writer, self).__init__()
+        super().__init__()
+        self.mainWindow = main_window
+        self.text = text
+        self.id = id
 
     def run(self):
-        for i in range(100):
-            rand = random.randint(0, 100)
-            if rand > 50:
-                _thread = thread.Thread(target=self.reader, args=(i,))
-                _thread.start()
-            else:
-                _thread = thread.Thread(target=self.writer, args=(i,))
-                _thread.start()
+        try:
+            _write_lock.lock()
+            self.mainWindow.writeLock.lock()
+            self.writeStartSignal.emit(self.text, self.id)
 
-
-if __name__ == '__main__':
-    rw_locker = RWLocker()
-    rw_locker.run()
+            self.mainWindow.writeLock.lock()
+            self.writeEndSignal.emit(self.id)
+            self.mainWindow.writeLock.unlock()
+        finally:
+            _write_lock.unlock()
