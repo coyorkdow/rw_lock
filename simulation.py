@@ -3,7 +3,7 @@ import threading as thread
 import time
 
 import matplotlib.pyplot as plt
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, QMutex
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QApplication)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from numpy import *
@@ -12,6 +12,8 @@ start_time = [i for i in range(30)]
 end_time = [i for i in range(30)]
 thread_time = [i for i in range(30)]
 thread_flag = [i for i in range(30)]  # 0是读者 1是写者
+
+mutex = QMutex()
 
 
 class Simulation(QWidget):
@@ -72,6 +74,7 @@ class DrawThread(QThread):
         super(DrawThread, self).__init__()
 
     def run(self):
+        mutex.lock()
         RWLocker().run()
         time.sleep(3)
         self.signal.emit()
@@ -85,7 +88,8 @@ class RWLocker:
         self.__read_cnt = 0
         self.all_num = 0
 
-    def thread_work(self):
+    @staticmethod
+    def thread_work():
         time.sleep(0.1)
 
     def __read_acquire(self):
@@ -108,28 +112,28 @@ class RWLocker:
     def __write_release(self):
         self.__write_lock.release()
 
-    def reader(self, no):
+    def reader(self, id):
         try:
             self.__read_acquire()
-            print('reader {} is reading resource... resource={}'.format(no, self.resource))
+            start_time[id] = time.time()
             self.thread_work()
         finally:
             self.__read_release()
-            end_time[no] = time.time()
+            end_time[id] = time.time()
             self.all_num += 1
             if self.all_num == 30:
                 for i in range(30):
                     thread_time[i] = end_time[i] - start_time[i]
 
-    def writer(self, no):
+    def writer(self, id):
         try:
             self.__write_acquire()
             self.resource += 1
-            print('writer {} is writing resource... resource={}'.format(no, self.resource))
+            start_time[id] = time.time()
             self.thread_work()
         finally:
             self.__write_release()
-            end_time[no] = time.time()
+            end_time[id] = time.time()
             self.all_num += 1
             if self.all_num == 30:
                 for i in range(30):
@@ -142,12 +146,12 @@ class RWLocker:
             if rand > 50:
                 thread_flag[i] = 0
                 _thread = thread.Thread(target=self.reader, args=(i,))
-                start_time[i] = time.time()
+                # start_time[i] = time.time()
                 _thread.start()
             else:
                 thread_flag[i] = 1
                 _thread = thread.Thread(target=self.writer, args=(i,))
-                start_time[i] = time.time()
+                # start_time[i] = time.time()
                 _thread.start()
 
 

@@ -96,7 +96,7 @@ class MainWindow(QWidget):
 
         w_box.addWidget(QLabel(), 0, 0)
         w_box.addWidget(view_widgets[2], 1, 0)
-        w_box.addWidget(QLabel('writers\'s buffer'), 0, 1)
+        w_box.addWidget(QLabel('writers\' buffer'), 0, 1)
         w_box.addWidget(view_widgets[3], 1, 1)
 
         view_widgets[1].setSizePolicy(QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed))

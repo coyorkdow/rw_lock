@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QApplication, QStackedWidget)
 
 from gui import MainWindow
-from simulation import Simulation, DrawThread
+from simulation import Simulation, DrawThread, mutex
 
 
 class Main(QWidget):
@@ -59,6 +59,7 @@ class Main(QWidget):
     def setPlot(self):
         self.simulation.box.itemAt(0).widget().reDraw()
         self.simulation.update()
+        mutex.unlock()
 
 
 if __name__ == '__main__':
