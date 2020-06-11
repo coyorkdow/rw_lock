@@ -244,9 +244,9 @@ class MainWindow(QWidget):
     def __writeEnd(self, id):
         self.rwStatus = 0
         self.operateRWButton.setText('remove reader')
-        self.writersWritingPane.removeWidget(self.readersReadingPane.itemAt(0).widget())
-        self.writersWritingPane.addWidget(MainWindow.Dummy(), 0, 0, 1, 1)
-        self.writersWritingPane.removeWidget(self.readersReadingPane.itemAt(0).widget())
+        self.writersWritingPane.removeWidget(self.writersWritingPane.itemAt(0).widget())
+        self.writersWritingPane.addWidget(MainWindow.Dummy())
+        self.writersWritingPane.removeWidget(self.writersWritingPane.itemAt(0).widget())
         self.rwTips.setText('there are neither readers nor writers')
 
     def __readStart(self, id):
