@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from PyQt5.QtCore import QThread, pyqtSignal, QMutex
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QApplication)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from numpy import *
+import numpy as np
 
 start_time = [i for i in range(30)]
 end_time = [i for i in range(30)]
@@ -55,13 +55,13 @@ class Canvas(FigureCanvasQTAgg):
         for i in range(30):
             if thread_flag[i] == 0:  # 如果是读者
                 print(i, ' ', start_time[i], ' ', end_time[i])
-                x1 = arange(int((start_time[i] - start_time[0]) * 100), int((end_time[i] - start_time[0]) * 100), 1)
+                x1 = np.arange(int((start_time[i] - start_time[0]) * 100), int((end_time[i] - start_time[0]) * 100), 1)
                 y1 = i * x1 - i * x1 + i
                 self.axes.plot(x1, y1, color='red', linewidth=3, linestyle='-')
 
             elif thread_flag[i] == 1:  # 如果是写者
                 print(i, ' ', start_time[i], ' ', end_time[i])
-                x1 = arange(int((start_time[i] - start_time[0]) * 100), int((end_time[i] - start_time[0]) * 100), 1)
+                x1 = np.arange(int((start_time[i] - start_time[0]) * 100), int((end_time[i] - start_time[0]) * 100), 1)
                 y1 = i * x1 - i * x1 + i
                 self.axes.plot(x1, y1, color='black', linewidth=3, linestyle='-')
         self.setUI()
